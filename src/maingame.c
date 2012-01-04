@@ -23,7 +23,7 @@ static int lives = 3;
 static int score = 0;
 static int minutes = 0;
 static int seconds = 0;
-static char *survival_time = "00:00";
+static char *survival_time = NULL;
 
 /*----------------------------------------------------------------------------*/
 
@@ -288,7 +288,7 @@ void update_survivaltime(ALLEGRO_BITMAP *image, float x, float y, int nflags, AL
         seconds = 0;
         minutes++;
     }
-    free(survival_time);
+	if(survival_time != NULL) free(survival_time);
     survival_time = (char*)malloc(7*sizeof(char));
     if(minutes < 10 && seconds < 10)
         sprintf(survival_time, "0%d:0%d", minutes, seconds);

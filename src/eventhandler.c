@@ -27,17 +27,23 @@ static _Bool mpressed = false;
 void* keyhandler(String key, void *data)
 {
     GDATAPTR game = (GDATAPTR)data;
-    if((key[ALLEGRO_KEY_W] & KEYNEW) || (key[ALLEGRO_KEY_UP] & KEYNEW))
+	if(game->gamestarted)
 	{
-	    set_anim_flags_on_sprite(search_sprite_list_for_element("STICKMAN"), MUP);
-	}
-	if((key[ALLEGRO_KEY_S] & KEYNEW) || (key[ALLEGRO_KEY_DOWN] & KEYNEW))
-	{
-	    set_anim_flags_on_sprite(search_sprite_list_for_element("STICKMAN"), MDOWN);
-	}
-	if((key[ALLEGRO_KEY_SPACE] & KEYNEW))
-	{
-        set_anim_flags_on_sprite(search_sprite_list_for_element("STICKMAN"), MATTACK);
+		if((key[ALLEGRO_KEY_W] & KEYNEW) || (key[ALLEGRO_KEY_UP] & KEYNEW))
+		{
+			set_anim_flags_on_sprite(search_sprite_list_for_element("STICKMAN"),
+				MUP);
+		}
+		if((key[ALLEGRO_KEY_S] & KEYNEW) || (key[ALLEGRO_KEY_DOWN] & KEYNEW))
+		{
+			set_anim_flags_on_sprite(search_sprite_list_for_element("STICKMAN"),
+				MDOWN);
+		}
+		if((key[ALLEGRO_KEY_SPACE] & KEYNEW))
+		{
+			set_anim_flags_on_sprite(search_sprite_list_for_element("STICKMAN"),
+				MATTACK);
+		}
 	}
 	if((key[ALLEGRO_KEY_ESCAPE] & KEYPRESSED))
 	{
