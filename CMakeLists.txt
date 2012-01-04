@@ -10,6 +10,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "")
 endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/install/")
 
 # Default Flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c99 -dM")
@@ -52,3 +53,9 @@ find_package(PhysFS REQUIRED)
 
 # Source files in here
 add_subdirectory(src)
+
+#install
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/src/speedrun DESTINATION ./)
+install(DIRECTORY resources/buttons/ DESTINATION buttons/)
+install(DIRECTORY resources/images/ DESTINATION images/)
+install(DIRECTORY resources/fonts/ DESTINATION fonts/)
