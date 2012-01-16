@@ -24,6 +24,7 @@ else (ALLEGRO_LIBRARIES AND ALLEGRO_INCLUDE_DIRS)
     PATHS
       /usr/include/allegro5
       /usr/include
+      /usr/local/include/allegro5
       /usr/local/include
       /opt/local/include
       /sw/include
