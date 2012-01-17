@@ -9,18 +9,28 @@ if(CMAKE_BUILD_TYPE STREQUAL "")
 	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+if(USE_CLANG)
+	set(CMAKE_C_COMPILER "clang")
+	set(CMAKE_CXX_COMPILER "clang++")
+	set(CMAKE_AR "llvm-ar")
+	set(CMAKE_LINKER "llvm-ld")
+	set(CMAKE_NM "llvm-nm")
+	set(CMAKE_OBJDUMP "llvm-objdump")
+	set(CMAKE_RANLIB "llvm-ranlib")
+endif(USE_CLANG)
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/install/")
 
 # Default Flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c99 -dM")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -dM")
+
 # If static linking is specified then link staticly with libstdc++
 if(SPACECHESS_STATIC_LINK)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static")
 endif(SPACECHESS_STATIC_LINK)
-
 
 # Debug Flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -pg")
