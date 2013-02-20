@@ -51,6 +51,7 @@ cpShape* create_new_shape(SPRITESPTR sprite, cpBody *spriteBody, float e, float 
     spriteShape->u = u;
     spriteShape->collision_type = coltype;
     spriteShape->data = data;
+	spriteBody->data = spriteShape;
     sprite->shape = spriteShape;
     cpSpaceAddShape(space, spriteShape);
     return spriteShape;

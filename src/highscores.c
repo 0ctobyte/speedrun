@@ -101,7 +101,7 @@ void load_file(void)
     long size = ftell(file);
     rewind(file);
     scorefile = (char*)malloc(size*sizeof(char));
-    int fread_size = fread(scorefile, 1, size, file);
+    fread(scorefile, 1, size, file);
     fclose(file);
     file = NULL;
     if((file = fopen("scores.database", "r")) == NULL)
@@ -113,7 +113,7 @@ void load_file(void)
     size = ftell(file);
     rewind(file);
     scores = (char*)malloc(size*sizeof(char));
-    fread_size = fread(scores, 1, size, file);
+    fread(scores, 1, size, file);
     fclose(file);
 }
 
@@ -137,12 +137,12 @@ void add_score(int score, char *survival_time)
     if(pos <= 10)
     {
         char *p = strchr(scores, '^');
-        char *q = scores;
+        //char *q = scores;
         int i = 1;
         while(i <= 10)
         {
             if(i == pos) break;
-            q = p;
+            //q = p;
             p = strchr(p+1, '^');
             i++;
         }

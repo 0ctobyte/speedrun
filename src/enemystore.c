@@ -223,7 +223,7 @@ SPRITESPTR create_new_enemy(char *enemy_type)
     }
 
     total_enemies = ameans + bwall + clamp + swall + fist + spikes + plants + raw;
-    cpSpaceResizeActiveHash(get_global_cpSpace(), 80.0, total_enemies+1*10);
+    //cpSpaceResizeActiveHash(get_global_cpSpace(), 80.0, total_enemies+1*10);
 
 
     return enemy;
@@ -231,8 +231,10 @@ SPRITESPTR create_new_enemy(char *enemy_type)
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-void remove_enemy(SPRITESPTR sprite)
+void remove_enemy(cpSpace *space, void *obj, void *data)
 {
+	SPRITESPTR sprite = (SPRITESPTR)obj;
+
     if(strcmp(sprite->slabel, "AMEAN") == 0)
         ameans--;
     else if(strcmp(sprite->slabel, "BRICK_WALL") == 0)

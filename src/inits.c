@@ -253,13 +253,13 @@ _Bool init_chipmunk(void)
     // Define a gravity vector
     space->gravity = cpv(0, 600);
     space->iterations = 10;
-    space->elasticIterations = 10;
+    //space->elasticIterations = 10;
     if(set_global_cpSpace(space) == NULL) return false;
-    float width, height;
+    //float width, height;
 
     SPRITESPTR ground = search_sprite_list_for_element("GROUND");
-    width = ground->sdata.currentimg->width;
-    height = ground->sdata.currentimg->height;
+    //width = ground->sdata.currentimg->width;
+    //height = ground->sdata.currentimg->height;
     cpBody *staticBody = cpBodyNew(INFINITY, INFINITY);
     staticBody->p = cpv(0+res_width/2, 0+res_height/2);
     cpShape *floorShape = cpSegmentShapeNew(staticBody,
