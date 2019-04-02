@@ -43,7 +43,6 @@ int main(int argc, char** argv)
     al_init_image_addon();
     al_init_font_addon();
     al_init_ttf_addon();
-    cpInitChipmunk();
     PHYSFS_init(argv[0]);
 
     // Initialize the core game data structure
@@ -89,9 +88,9 @@ _Bool data_init(void)
 
     // Sets the physfs file interface to be used for loading files
     al_set_physfs_file_interface();
-    PHYSFS_addToSearchPath("images", 1);
-    PHYSFS_addToSearchPath("fonts", 1);
-    PHYSFS_addToSearchPath("buttons", 1);
+    PHYSFS_mount("images", NULL, 1);
+    PHYSFS_mount("fonts", NULL, 1);
+    PHYSFS_mount("buttons", NULL, 1);
 
     // Well, looks like we're gonna have to draw our own mouse *SIGH*
     al_hide_mouse_cursor(data->display);

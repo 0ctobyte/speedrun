@@ -41,9 +41,9 @@ if(WIN32)
 endif(WIN32)
 
 # Requires Allegro, chipmunk and PHYSFS
-find_package(Allegro REQUIRED)
-find_package(Chipmunk REQUIRED)
-find_package(PhysFS REQUIRED)
+find_package(Allegro 5.2.5 REQUIRED)
+find_package(Chipmunk 7.0.2 REQUIRED)
+find_package(PhysFS 3.0.1 REQUIRED)
 
 # Source files in here
 add_subdirectory(src)

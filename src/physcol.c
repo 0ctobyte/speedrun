@@ -31,7 +31,7 @@ cpBody* create_new_body(SPRITESPTR sprite, float weight)
     float width = sprite->sdata.currentimg->width;
     float height = sprite->sdata.currentimg->height;
     cpBody *spriteBody = cpBodyNew(weight, INFINITY);;
-    spriteBody->p = cpv(sprite->sdata.x+width/2, sprite->sdata.y+height/2);
+    cpBodySetPosition(spriteBody, cpv(sprite->sdata.x+width/2, sprite->sdata.y+height/2));
     cpSpaceAddBody(space, spriteBody);
     return spriteBody;
 }
@@ -46,12 +46,12 @@ cpShape* create_new_shape(SPRITESPTR sprite, cpBody *spriteBody, float e, float 
                        cpv(0-width/2, 0+height/2),
                        cpv(0+width/2, 0+height/2),
                        cpv(0+width/2, 0-height/2)};
-    cpShape *spriteShape = cpPolyShapeNew(spriteBody, 4, vects, cpvzero);
-    spriteShape->e = e;
-    spriteShape->u = u;
-    spriteShape->collision_type = coltype;
-    spriteShape->data = data;
-	spriteBody->data = spriteShape;
+    cpShape *spriteShape = cpPolyShapeNew(spriteBody, 4, vects, cpTransformIdentity, 1);
+    cpShapeSetElasticity(spriteShape, e);
+    cpShapeSetFriction(spriteShape, u);
+    cpShapeSetCollisionType(spriteShape, coltype);
+    cpShapeSetUserData(spriteShape, data);
+    cpBodySetUserData(spriteBody, spriteShape);
     sprite->shape = spriteShape;
     cpSpaceAddShape(space, spriteShape);
     return spriteShape;
@@ -70,20 +70,21 @@ cpShape* create_physics_object(SPRITESPTR sprite, float w, float e, float u, int
 
 void remove_physics_object(SPRITESPTR sprite)
 {
-    cpSpaceRemoveBody(space, sprite->shape->body);
-    cpBodyFree(sprite->shape->body);
+    cpBody* body = cpShapeGetBody(sprite->shape);
+    cpSpaceRemoveBody(space, body);
+    cpBodyFree(body);
     cpSpaceRemoveShape(space, sprite->shape);
     cpShapeFree(sprite->shape);
 }
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-int collision_begin(cpArbiter *arb, cpSpace *Space, void *data)
+unsigned char collision_begin(cpArbiter *arb, cpSpace *Space, void *data)
 {
     cpShape *a, *b;
     cpArbiterGetShapes(arb, &a, &b);
-    SPRITESPTR stman = search_sprite_list_for_element((char*)a->data);
-    SPRITESPTR sprite = (SPRITESPTR)b->data;
+    SPRITESPTR stman = search_sprite_list_for_element((char*)cpShapeGetUserData(a));
+    SPRITESPTR sprite = (SPRITESPTR)cpShapeGetUserData(b);
     if((stman->sdata.animflags & MRECOVER))
     {
         return 0;
@@ -148,7 +149,7 @@ int collision_begin(cpArbiter *arb, cpSpace *Space, void *data)
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-int collision_pre_solve(cpArbiter *arb, cpSpace *Space, void *data)
+unsigned char collision_pre_solve(cpArbiter *arb, cpSpace *Space, void *data)
 {
     return 1;
 }
@@ -168,22 +169,23 @@ void collision_separate(cpArbiter *arb, cpSpace *Space, void *data)
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-int collision_static_begin(cpArbiter *arb, cpSpace *Space, void *data)
+unsigned char collision_static_begin(cpArbiter *arb, cpSpace *Space, void *data)
 {
     cpShape *a, *b;
     cpArbiterGetShapes(arb, &a, &b);
 
-    if(b->collision_type == 1 && strcmp((char*)a->data, "LEFTSHAPE") == 0)
+    void* a_data = cpShapeGetUserData(a);
+    if(cpShapeGetCollisionType(b) == 1 && strcmp((char*)a_data, "LEFTSHAPE") == 0)
     {
-        SPRITESPTR stman = search_sprite_list_for_element((char*)b->data);
+        SPRITESPTR stman = search_sprite_list_for_element((char*)cpShapeGetUserData(b));
         if((stman->sdata.animflags & MDAMAGED))
             return 0;
         else
             return 1;
     }
-    else if(strcmp((char*)a->data, "FLOORSHAPE") == 0)
+    else if(strcmp((char*)a_data, "FLOORSHAPE") == 0)
         return 1;
-    else if(strcmp((char*)a->data, "TOPSHAPE") == 0)
+    else if(strcmp((char*)a_data, "TOPSHAPE") == 0)
         return 1;
     else
         return 0;
@@ -191,7 +193,7 @@ int collision_static_begin(cpArbiter *arb, cpSpace *Space, void *data)
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-int collision_static_pre_solve(cpArbiter *arb, cpSpace *Space, void *data)
+unsigned char collision_static_pre_solve(cpArbiter *arb, cpSpace *Space, void *data)
 {
     return 1;
 }

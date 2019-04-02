@@ -46,9 +46,12 @@ void update(void)
         if(!called)
         {
             //cpSpaceResizeStaticHash(get_global_cpSpace(), 700.0, 4*10);
-            cpSpaceAddCollisionHandler(get_global_cpSpace(), 1, 2, collision_begin, NULL, NULL, NULL, NULL);
-            cpSpaceAddCollisionHandler(get_global_cpSpace(), 0, 2, collision_static_begin, NULL, NULL, NULL, NULL);
-            cpSpaceAddCollisionHandler(get_global_cpSpace(), 0, 1, collision_static_begin, NULL, NULL, NULL, NULL);
+            cpCollisionHandler* c = cpSpaceAddCollisionHandler(get_global_cpSpace(), 1, 2);
+            c->beginFunc = collision_begin;
+            c = cpSpaceAddCollisionHandler(get_global_cpSpace(), 0, 2);
+            c->beginFunc = collision_static_begin;
+            c = cpSpaceAddCollisionHandler(get_global_cpSpace(), 0, 1);
+            c->beginFunc = collision_static_begin;
             called = false;
         }
         logic();
@@ -82,7 +85,7 @@ void update_stickman(void)
     SPRITESPTR stman = search_sprite_list_for_element("STICKMAN");
     SPRITESPTR ground = search_sprite_list_for_element("GROUND");
     float height = (search_image_list_for_element(&stman->ifirstptr, "STICKFIGURE_MOVE_1"))->height;
-    float y = stman->shape->body->p.y-height/2;
+    float y = cpBodyGetPosition(cpShapeGetBody(stman->shape)).y-height/2;
     int cx = 0, cy = 0, nflags = 0;
     static _Bool up = false, down = false;
     ALLEGRO_COLOR color = RCOLOR(255, 255, 255, 255);
@@ -91,14 +94,16 @@ void update_stickman(void)
     {
         //static int sx = 0;
         //static int sy = 0;
-        if(y+height >= ground->sdata.y)
+        if(fabs(y+height-ground->sdata.y) <= 1.f)
+        {
             stman->sdata.anim_counter++;
+        }
         stman->sdata.currentimg = search_image_list_for_element(&stman->ifirstptr, "STICKFIGURE_MOVE_1");
         if(stman->sdata.anim_counter >= 20)
         {
             stman->sdata.anim_counter = 0;
-            stman->shape->e = 0.1;
-            stman->shape->u = 0.9;
+            cpShapeSetElasticity(stman->shape, 0.1f);
+            cpShapeSetFriction(stman->shape, 0.9f);
             //sx = stman->shape->body->p.x;
             //sy = stman->shape->body->p.y;
             start = true;
@@ -108,10 +113,11 @@ void update_stickman(void)
     {
         if(y+height >= ground->sdata.y && !up)
         {
-            cpVect currentvel = stman->shape->body->v;
-			stman->shape->body->v = cpv(0, -stman->sdata.dy);
-            cpVect newvel = stman->shape->body->v;
-            stman->shape->body->v = cpvadd(currentvel, newvel);
+            cpBody* body = cpShapeGetBody(stman->shape);
+            cpVect currentvel = cpBodyGetVelocity(body);
+			cpBodySetVelocity(body, cpv(0, -stman->sdata.dy));
+            cpVect newvel = cpBodyGetVelocity(body);
+            cpBodySetVelocity(body, cpvadd(currentvel, newvel));
             up = true;
         }
         else if(y+height >= ground->sdata.y && up)
@@ -177,8 +183,9 @@ void update_stickman(void)
         {
             remove_anim_flags_on_sprite(stman, MDAMAGED);
             set_anim_flags_on_sprite(stman, MRECOVER);
-            stman->shape->body->p.x = 70;
-            stman->shape->body->v = cpvzero;
+            cpBody* body = cpShapeGetBody(stman->shape);
+            cpBodySetPosition(body, cpv(70, cpBodyGetPosition(body).y));
+            cpBodySetVelocity(body, cpvzero);
             counter = 0;
         }
     }
@@ -203,15 +210,18 @@ void update_stickman(void)
         }
     }
 
-    if((int)stman->shape->body->p.x != 50 && start && y+height >= ground->sdata.y && !(stman->sdata.animflags & MDAMAGED))
+    cpBody* body = cpShapeGetBody(stman->shape);
+    cpVect position = cpBodyGetPosition(body);
+    if((int)position.x != 50 && start && y+height >= ground->sdata.y && !(stman->sdata.animflags & MDAMAGED))
     {
-        stman->shape->body->p.x = 70;
+        cpBodySetPosition(body, cpv(70, position.y));
     }
 
+    position = cpBodyGetPosition(body);
     add_element_to_render_queue(stman->sdata.currentimg->image, stman->sdata.x+cx, stman->sdata.y+cy, nflags,
                                 color, NULL);
-    stman->sdata.x = stman->shape->body->p.x-stman->sdata.currentimg->width/2;
-    stman->sdata.y = stman->shape->body->p.y-stman->sdata.currentimg->height/2;
+    stman->sdata.x = position.x-stman->sdata.currentimg->width/2;
+    stman->sdata.y = position.y-stman->sdata.currentimg->height/2;
 }
 
 /*----------------------------------------------------------------------------------------------------------*/
@@ -244,7 +254,7 @@ void update_score(ALLEGRO_BITMAP *image, float x, float y, int nflags, ALLEGRO_C
 void collision_end_win(cpSpace *Space, void *obj, void *unused)
 {
     cpShape *shape = (cpShape*)obj;
-    SPRITESPTR sprite = (SPRITESPTR)shape->data;
+    SPRITESPTR sprite = (SPRITESPTR)cpShapeGetUserData(shape);
 
     if(strcmp(sprite->slabel, "AMEAN") == 0)
         score += 2;
@@ -308,7 +318,8 @@ void update_ameans(SPRITESPTR amean)
 {
     int nflags = 0;
 
-	amean->shape->body->v = cpv(-180, 0);
+    cpBody* body = cpShapeGetBody(amean->shape);
+	cpBodySetVelocity(body, cpv(-180, 0));
 
     amean->sdata.anim_counter++;
     if(amean->sdata.anim_counter < 7)
@@ -330,10 +341,11 @@ void update_ameans(SPRITESPTR amean)
     else if(amean->sdata.anim_counter > 28)
         amean->sdata.anim_counter = 0;
 
+    cpVect position = cpBodyGetPosition(body);
     add_element_to_render_queue(amean->sdata.currentimg->image, amean->sdata.x, amean->sdata.y, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
-    amean->sdata.x = amean->shape->body->p.x-amean->sdata.currentimg->width/2;
-    amean->sdata.y = amean->shape->body->p.y-amean->sdata.currentimg->height/2;
+    amean->sdata.x = position.x-amean->sdata.currentimg->width/2;
+    amean->sdata.y = position.y-amean->sdata.currentimg->height/2;
 
     if(amean->sdata.x+amean->sdata.currentimg->width <= 0)
         cpSpaceAddPostStepCallback(get_global_cpSpace(), &remove_enemy, amean, NULL);
@@ -345,12 +357,14 @@ void update_brickwall(SPRITESPTR brickwall)
 {
     int nflags = 0;
 
-	brickwall->shape->body->v = cpv(-180, 0);
+    cpBody* body = cpShapeGetBody(brickwall->shape);
+	cpBodySetVelocity(body, cpv(-180, 0));
 
+    cpVect position = cpBodyGetPosition(body);
     add_element_to_render_queue(brickwall->sdata.currentimg->image, brickwall->sdata.x, brickwall->sdata.y, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
-    brickwall->sdata.x = brickwall->shape->body->p.x-brickwall->sdata.currentimg->width/2;
-    brickwall->sdata.y = brickwall->shape->body->p.y-brickwall->sdata.currentimg->height/2;
+    brickwall->sdata.x = position.x-brickwall->sdata.currentimg->width/2;
+    brickwall->sdata.y = position.y-brickwall->sdata.currentimg->height/2;
 
     if((brickwall->sdata.animflags & MDOWN))
     {
@@ -380,27 +394,29 @@ void update_clamp(SPRITESPTR clamp)
     int nflags = 0;
     SIMAGEPTR arm = search_image_list_for_element(&(clamp->ifirstptr), "ARM");
 
+    cpBody* body = cpShapeGetBody(clamp->shape);
     if(clamp->sdata.x <= 200)
     {
         if(clamp->sdata.y+clamp->sdata.currentimg->height >= 470)
-			clamp->shape->body->v = cpv(-180, 0);
+			cpBodySetVelocity(body, cpv(-180, 0));
         else
-			clamp->shape->body->v = cpv(-180, 500);
+			cpBodySetVelocity(body, cpv(-180, 500));
     }
     else
-		clamp->shape->body->v = cpv(-180, 0);
+	    cpBodySetVelocity(body, cpv(-180, 0));
 
     if((clamp->sdata.animflags & MATTACK))
         clamp->sdata.currentimg = search_image_list_for_element(&clamp->ifirstptr, "CLAMP_CLOSE");
 
+    cpVect position = cpBodyGetPosition(body);
     add_element_to_render_queue(clamp->sdata.currentimg->image, clamp->sdata.x, clamp->sdata.y, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
     add_element_to_render_queue(arm->image, clamp->sdata.x, clamp->sdata.y-arm->height, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
     add_element_to_render_queue(arm->image, clamp->sdata.x, clamp->sdata.y-arm->height-arm->height, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
-    clamp->sdata.x = clamp->shape->body->p.x-clamp->sdata.currentimg->width/2;
-    clamp->sdata.y = clamp->shape->body->p.y-clamp->sdata.currentimg->height/2;
+    clamp->sdata.x = position.x-clamp->sdata.currentimg->width/2;
+    clamp->sdata.y = position.y-clamp->sdata.currentimg->height/2;
 
     if(clamp->sdata.x+clamp->sdata.currentimg->width <= 0)
 		cpSpaceAddPostStepCallback(get_global_cpSpace(), &remove_enemy, clamp, NULL);
@@ -413,12 +429,14 @@ void update_steelwall(SPRITESPTR steelwall)
 {
     int nflags = 0;
 
-	steelwall->shape->body->v = cpv(-180, 0);
+    cpBody* body = cpShapeGetBody(steelwall->shape);
+	cpBodySetVelocity(body, cpv(-180, 0));
 
+    cpVect position = cpBodyGetPosition(body);
     add_element_to_render_queue(steelwall->sdata.currentimg->image, steelwall->sdata.x, steelwall->sdata.y, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
-    steelwall->sdata.x = steelwall->shape->body->p.x-steelwall->sdata.currentimg->width/2;
-    steelwall->sdata.y = steelwall->shape->body->p.y-steelwall->sdata.currentimg->height/2;
+    steelwall->sdata.x = position.x-steelwall->sdata.currentimg->width/2;
+    steelwall->sdata.y = position.y-steelwall->sdata.currentimg->height/2;
 
     if(steelwall->sdata.x+steelwall->sdata.currentimg->width <= 0)
         cpSpaceAddPostStepCallback(get_global_cpSpace(), &remove_enemy, steelwall, NULL);
@@ -430,12 +448,14 @@ void update_fist(SPRITESPTR fist)
 {
     int nflags = 0;
 
-	fist->shape->body->v = cpv(-180, 0);
+    cpBody* body = cpShapeGetBody(fist->shape);
+	cpBodySetVelocity(body, cpv(-180, 0));
 
+    cpVect position = cpBodyGetPosition(body);
     add_element_to_render_queue(fist->sdata.currentimg->image, fist->sdata.x, fist->sdata.y, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
-    fist->sdata.x = fist->shape->body->p.x-fist->sdata.currentimg->width/2;
-    fist->sdata.y = fist->shape->body->p.y-fist->sdata.currentimg->height/2;
+    fist->sdata.x = position.x-fist->sdata.currentimg->width/2;
+    fist->sdata.y = position.y-fist->sdata.currentimg->height/2;
 
     if(fist->sdata.x+fist->sdata.currentimg->width <= 0)
         cpSpaceAddPostStepCallback(get_global_cpSpace(), &remove_enemy, fist, NULL);
@@ -447,12 +467,14 @@ void update_spikes(SPRITESPTR spikes)
 {
     int nflags = 0;
 
-	spikes->shape->body->v = cpv(-180, 0);
+    cpBody* body = cpShapeGetBody(spikes->shape);
+	cpBodySetVelocity(body, cpv(-180, 0));
 
+    cpVect position = cpBodyGetPosition(body);
     add_element_to_render_queue(spikes->sdata.currentimg->image, spikes->sdata.x, spikes->sdata.y, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
-    spikes->sdata.x = spikes->shape->body->p.x-spikes->sdata.currentimg->width/2;
-    spikes->sdata.y = spikes->shape->body->p.y-spikes->sdata.currentimg->height/2;
+    spikes->sdata.x = position.x-spikes->sdata.currentimg->width/2;
+    spikes->sdata.y = position.y-spikes->sdata.currentimg->height/2;
 
     if(spikes->sdata.x+spikes->sdata.currentimg->width <= 0)
         cpSpaceAddPostStepCallback(get_global_cpSpace(), &remove_enemy, spikes, NULL);
@@ -464,7 +486,8 @@ void update_raw(SPRITESPTR raw)
 {
     int nflags = 0;
 
-	raw->shape->body->v = cpv(-180, 0);
+    cpBody* body = cpShapeGetBody(raw->shape);
+	cpBodySetVelocity(body, cpv(-180, 0));
 
     if(raw->sdata.x <= 600 && raw->sdata.x >= 550)
     {
@@ -504,8 +527,9 @@ void update_raw(SPRITESPTR raw)
                                     RCOLOR(255, 255, 255, 255), NULL);
     }
 
-    raw->sdata.x = raw->shape->body->p.x-raw->sdata.currentimg->width/2;
-    raw->sdata.y = raw->shape->body->p.y-raw->sdata.currentimg->height/2;
+    cpVect position = cpBodyGetPosition(body);
+    raw->sdata.x = position.x-raw->sdata.currentimg->width/2;
+    raw->sdata.y = position.y-raw->sdata.currentimg->height/2;
 
     if(raw->sdata.x+raw->sdata.currentimg->width <= 0)
         cpSpaceAddPostStepCallback(get_global_cpSpace(), &remove_enemy, raw, NULL);
@@ -518,25 +542,27 @@ void update_plant(SPRITESPTR plant)
     int nflags = 0;
     SIMAGEPTR stem = search_image_list_for_element(&(plant->ifirstptr), "STEM");
 
+    cpBody* body = cpShapeGetBody(plant->shape);
     if(plant->sdata.x <= res_width/4)
     {
         if(plant->sdata.y+plant->sdata.currentimg->height <= 440)
         {
-			plant->shape->body->v = cpv(-180, 0);
+			cpBodySetVelocity(body, cpv(-180, 0));
             plant->sdata.currentimg = search_image_list_for_element(&(plant->ifirstptr), "PLANT_1");
         }
         else
-			plant->shape->body->v = cpv(-180, -200);
+			cpBodySetVelocity(body, cpv(-180, -200));
     }
     else
-		plant->shape->body->v = cpv(-180, 0);
+	    cpBodySetVelocity(body, cpv(-180, 0));
 
+    cpVect position = cpBodyGetPosition(body);
     add_element_to_render_queue(plant->sdata.currentimg->image, plant->sdata.x, plant->sdata.y, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
     add_element_to_render_queue(stem->image, plant->sdata.x, plant->sdata.y+plant->sdata.currentimg->height, nflags,
                                 RCOLOR(255, 255, 255, 255), NULL);
-    plant->sdata.x = plant->shape->body->p.x-plant->sdata.currentimg->width/2;
-    plant->sdata.y = plant->shape->body->p.y-plant->sdata.currentimg->height/2;
+    plant->sdata.x = position.x-plant->sdata.currentimg->width/2;
+    plant->sdata.y = position.y-plant->sdata.currentimg->height/2;
 
     if(plant->sdata.x+plant->sdata.currentimg->width <= 0)
         cpSpaceAddPostStepCallback(get_global_cpSpace(), &remove_enemy, plant, NULL);
@@ -599,13 +625,14 @@ void update_background(void)
 
 void update_sprites(cpBody *body, void* unused)
 {
-	cpShape *shape = (cpShape*)body->data;
-    if(shape == NULL || shape->body == NULL || shape->data == NULL)
+	cpShape *shape = (cpShape*)cpBodyGetUserData(body);
+    void* data = cpShapeGetUserData(shape);
+    if(shape == NULL || cpShapeGetBody(shape) == NULL || data == NULL)
         return;
 
-	SPRITES *sprite = (SPRITES*)shape->data;
+	SPRITES *sprite = (SPRITES*)data;
 
-    if(strcmp((char*)shape->data, "STICKMAN") == 0)
+    if(strcmp((char*)data, "STICKMAN") == 0)
         update_stickman();
     else if(strcmp(sprite->slabel, "AMEAN") == 0)
         update_ameans(sprite);
@@ -692,8 +719,8 @@ void maingame_cleanup(void)
     SPRITESPTR stman = search_sprite_list_for_element("STICKMAN");
     SPRITESPTR ground = search_sprite_list_for_element("GROUND");
     GDATAPTR game = get_game_data();
-    cpSpace *space = get_global_cpSpace();
-    cpSpaceRemoveCollisionHandler(space, 1, 2);
+    cpCollisionHandler* c = cpSpaceAddCollisionHandler(get_global_cpSpace(), 1, 2);
+    c->beginFunc = NULL;
     remove_physics_object(stman);
     remove_element_from_sprite_list_ptr(stman);
     remove_element_from_sprite_list("CLOUD");

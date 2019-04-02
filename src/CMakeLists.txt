@@ -8,7 +8,7 @@ set(SRCS buttons.c enemystore.c eventhandler.c gameover.c highscores.c howtoplay
 set(INCLUDES ${CMAKE_SOURCE_DIR}/include ${CHIPMUNK_INCLUDE_DIR} ${ALLEGRO_INCLUDE_DIRS} ${ALLEGRO_INCLUDE_DIRS} ${PHYSFS_DIR})
 
 # Set the libraries needed by this project
-set(LIBS ${ALLEGRO_LIBRARIES} allegro_main allegro_font allegro_image allegro_physfs allegro_primitives allegro_ttf allegro_dialog ${CHIPMUNK_LIBRARY} ${PHYSFS_LIBRARY})
+set(LIBS ${ALLEGRO_LIBRARIES} ${CHIPMUNK_LIBRARY} ${PHYSFS_LIBRARY})
 
 # Add the sources, include dirs and libs
 add_executable(speedrun ${SRCS})

@@ -34,11 +34,11 @@ void remove_physics_object(SPRITESPTR sprite);
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-int collision_begin(cpArbiter *arb, cpSpace *Space, void *data);
+unsigned char collision_begin(cpArbiter *arb, cpSpace *Space, void *data);
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-int collision_pre_solve(cpArbiter *arb, cpSpace *Space, void *data);
+unsigned char collision_pre_solve(cpArbiter *arb, cpSpace *Space, void *data);
 
 /*----------------------------------------------------------------------------------------------------------*/
 
@@ -50,11 +50,11 @@ void collision_separate(cpArbiter *arb, cpSpace *Space, void *data);
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-int collision_static_begin(cpArbiter *arb, cpSpace *Space, void *data);
+unsigned char  collision_static_begin(cpArbiter *arb, cpSpace *Space, void *data);
 
 /*----------------------------------------------------------------------------------------------------------*/
 
-int collision_static_pre_solve(cpArbiter *arb, cpSpace *Space, void *data);
+unsigned char collision_static_pre_solve(cpArbiter *arb, cpSpace *Space, void *data);
 
 /*----------------------------------------------------------------------------------------------------------*/
 

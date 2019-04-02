@@ -251,8 +251,8 @@ _Bool init_chipmunk(void)
 {
     cpSpace *space = cpSpaceNew();
     // Define a gravity vector
-    space->gravity = cpv(0, 600);
-    space->iterations = 10;
+    cpSpaceSetGravity(space, cpv(0, 600));
+    cpSpaceSetIterations(space, 10);
     //space->elasticIterations = 10;
     if(set_global_cpSpace(space) == NULL) return false;
     //float width, height;
@@ -260,47 +260,47 @@ _Bool init_chipmunk(void)
     SPRITESPTR ground = search_sprite_list_for_element("GROUND");
     //width = ground->sdata.currentimg->width;
     //height = ground->sdata.currentimg->height;
-    cpBody *staticBody = cpBodyNew(INFINITY, INFINITY);
-    staticBody->p = cpv(0+res_width/2, 0+res_height/2);
+    cpBody *staticBody = cpBodyNewStatic();
+    cpBodySetPosition(staticBody, cpv(0+res_width/2, 0+res_height/2));
     cpShape *floorShape = cpSegmentShapeNew(staticBody,
                                             cpv(0-res_width/2, 0+res_height/2-(res_height-ground->sdata.y)),
                                             cpv(0+res_width, 0+res_height/2-(res_height-ground->sdata.y)),
                                             0);
-    floorShape->e = 0.5f;
-    floorShape->u = 0.2f;
-    floorShape->collision_type = 0;
-    floorShape->data = "FLOORSHAPE";
-    cpSpaceAddStaticShape(space, floorShape);
+    cpShapeSetElasticity(floorShape, 0.5f);
+    cpShapeSetFriction(floorShape, 0.2f);
+    cpShapeSetCollisionType(floorShape, 0);
+    cpShapeSetUserData(floorShape, "FLOORSHAPE");
+    cpSpaceAddShape(space, floorShape);
 
     cpShape *leftShape = cpSegmentShapeNew(staticBody,
                                            cpv(0-res_width/2, 0+res_height/2),
                                            cpv(0-res_width/2, 0-res_height/2),
                                            0);
-    leftShape->e = 0.5f;
-    leftShape->u = 0.2f;
-    leftShape->collision_type = 0;
-    leftShape->data = "LEFTSHAPE";
-    cpSpaceAddStaticShape(space, leftShape);
+    cpShapeSetElasticity(leftShape, 0.5f);
+    cpShapeSetFriction(leftShape, 0.2f);
+    cpShapeSetCollisionType(leftShape, 0);
+    cpShapeSetUserData(leftShape, "LEFTSHAPE");
+    cpSpaceAddShape(space, leftShape);
 
     cpShape *rightShape = cpSegmentShapeNew(staticBody,
                                             cpv(0+res_width/2, 0+res_height/2),
                                             cpv(0+res_width/2, 0-res_height/2),
                                             0);
-    rightShape->e = 0.5f;
-    rightShape->u = 0.2f;
-    rightShape->collision_type = 0;
-    rightShape->data = "RIGHTSHAPE";
-    cpSpaceAddStaticShape(space, rightShape);
+    cpShapeSetElasticity(rightShape, 0.5f);
+    cpShapeSetFriction(rightShape, 0.2f);
+    cpShapeSetCollisionType(rightShape, 0);
+    cpShapeSetUserData(rightShape, "RIGHTSHAPE");
+    cpSpaceAddShape(space, rightShape);
 
     cpShape *topShape = cpSegmentShapeNew(staticBody,
                                           cpv(0-res_width/2, 0-res_height/2),
                                           cpv(0+res_width/2, 0-res_height/2),
                                           0);
-    topShape->e = 0.5f;
-    topShape->u = 0.2f;
-    topShape->collision_type = 0;
-    topShape->data = "TOPSHAPE";
-    cpSpaceAddStaticShape(space, topShape);
+    cpShapeSetElasticity(topShape, 0.5f);
+    cpShapeSetFriction(topShape, 0.2f);
+    cpShapeSetCollisionType(topShape, 0);
+    cpShapeSetUserData(topShape, "TOPSHAPE");
+    cpSpaceAddShape(space, topShape);
 
     return true;
 }
