@@ -90,11 +90,12 @@ void update_stickman(void)
     static _Bool up = false, down = false;
     ALLEGRO_COLOR color = RCOLOR(255, 255, 255, 255);
 
+    _Bool near_ground = fabs(y+height-ground->sdata.y) <= 1.f;
     if(!start)
     {
         //static int sx = 0;
         //static int sy = 0;
-        if(fabs(y+height-ground->sdata.y) <= 1.f)
+        if(near_ground)
         {
             stman->sdata.anim_counter++;
         }
@@ -111,7 +112,7 @@ void update_stickman(void)
     }
     else if((stman->sdata.animflags & MUP) && !down)
     {
-        if(y+height >= ground->sdata.y && !up)
+        if(near_ground && !up)
         {
             cpBody* body = cpShapeGetBody(stman->shape);
             cpVect currentvel = cpBodyGetVelocity(body);
@@ -120,7 +121,7 @@ void update_stickman(void)
             cpBodySetVelocity(body, cpvadd(currentvel, newvel));
             up = true;
         }
-        else if(y+height >= ground->sdata.y && up)
+        else if(near_ground && up)
         {
            remove_anim_flags_on_sprite(stman, MUP);
            up = false;
@@ -212,7 +213,7 @@ void update_stickman(void)
 
     cpBody* body = cpShapeGetBody(stman->shape);
     cpVect position = cpBodyGetPosition(body);
-    if((int)position.x != 50 && start && y+height >= ground->sdata.y && !(stman->sdata.animflags & MDAMAGED))
+    if((int)position.x != 50 && start && near_ground && !(stman->sdata.animflags & MDAMAGED))
     {
         cpBodySetPosition(body, cpv(70, position.y));
     }
