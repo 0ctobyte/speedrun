@@ -63,7 +63,7 @@ void* keyhandler(String key, void *data)
 	    }
 	    else
 	    {
-            game->paused = true;
+            if (game->gamestarted) game->paused = true;
 	    }
 	}
 	return NULL;
